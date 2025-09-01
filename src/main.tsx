@@ -1,20 +1,24 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { Amplify } from "aws-amplify";
-import outputs from "../amplify_outputs.json";
-import App from "./App.tsx";
+// src/main.tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { Amplify } from 'aws-amplify';
+import outputs from '../amplify_outputs.json';
+import App from './App';
 
 import { ThemeProvider, Authenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import './index.css';
 import { amplifyTheme } from './amplifyTheme';
 
+// Configure Amplify from the generated outputs
 Amplify.configure(outputs);
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <ThemeProvider theme={amplifyTheme}>
             <Authenticator
+                // If your Cognito sign-in is email-based, uncomment the next line:
+                // loginMechanisms={['email']}
                 formFields={{
                     signIn: {
                         username: { label: 'Email', placeholder: 'you@company.com' },
@@ -29,7 +33,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 components={{
                     SignIn: {
                         Header() {
-                            return <div style={{ padding: 12, textAlign: 'center' }}><h2>Check Ride 3 demo 👋</h2></div>;
+                            return (
+                                <div style={{ padding: 12, textAlign: 'center' }}>
+                                    <h2>Check Ride 3 demo 👋</h2>
+                                </div>
+                            );
                         },
                         Footer() {
                             return (
@@ -41,7 +49,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                     },
                     SignUp: {
                         Header() {
-                            return <div style={{ padding: 12, textAlign: 'center' }}><h2>Create your account for CR3 Demo</h2></div>;
+                            return (
+                                <div style={{ padding: 12, textAlign: 'center' }}>
+                                    <h2>Create your account for CR3 Demo</h2>
+                                </div>
+                            );
                         },
                         Footer() {
                             return (
