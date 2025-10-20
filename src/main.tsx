@@ -42,7 +42,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         Footer() {
                             return (
                                 <div style={{ padding: 12, textAlign: 'center' }}>
-                                    Demo by : Qosai Samara
+                                    Demo by : Qosai Samara 2025
                                 </div>
                             );
                         },
@@ -58,7 +58,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         Footer() {
                             return (
                                 <div style={{ padding: 12, textAlign: 'center' }}>
-                                    Demo by : Qosai Samara
+                                    Demo by : Qosai Samara 2025
                                 </div>
                             );
                         },
