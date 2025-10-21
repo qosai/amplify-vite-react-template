@@ -1,26 +1,24 @@
-// src/App.tsx
 import { useEffect, useState } from "react";
 import type { Schema } from "../amplify/data/resource";
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { generateClient } from "aws-amplify/data";
+// NEW: Storage v6 APIs
 import { uploadData, list, getUrl, type ListPaginateWithPathOutput } from 'aws-amplify/storage';
 
 const client = generateClient<Schema>();
+const FILE_PREFIX = 'user-uploads/'; // must match backend access rule
 
 function App() {
   const { signOut } = useAuthenticator();
-
-  // Todos (existing)
   const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
 
-  // Files (new)
-  const FILE_PREFIX = 'user-uploads/'; // must match backend path
+  // --- File state ---
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [files, setFiles] = useState<Array<{ path: string; name: string }>>([]);
-  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [files, setFiles] = useState<Array<{ path: string; name: string }>>([]);
 
-  // Existing todos subscription
+  // Existing Todos subscription
   useEffect(() => {
     const sub = client.models.Todo.observeQuery().subscribe({
       next: (data) => setTodos([...data.items]),
@@ -37,18 +35,17 @@ function App() {
     client.models.Todo.delete({ id });
   }
 
-  // NEW: List files under user-uploads/
+  // --- List files (v6 list API) ---
   async function refreshFiles() {
     setIsLoadingFiles(true);
     try {
       const out: ListPaginateWithPathOutput = await list({
-        // List all objects under the prefix
         path: FILE_PREFIX,
         options: { listAll: true },
       });
-      const items = (out.items ?? []).map((i) => ({
-        path: i.path, // full path, e.g., "user-uploads/photo.jpg"
-        name: i.path.replace(FILE_PREFIX, ''), // display neat filename
+      const items = (out.items ?? []).map(i => ({
+        path: i.path,
+        name: i.path.replace(FILE_PREFIX, ''),
       }));
       setFiles(items);
     } finally {
@@ -56,71 +53,71 @@ function App() {
     }
   }
 
-  // Load files once on mount and after sign-in
   useEffect(() => {
     refreshFiles();
   }, []);
 
-  // NEW: Handle file selection + upload
+  // --- Upload (v6 uploadData; await .result) ---
   async function handleUpload() {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      alert('Choose a file first.');
+      return;
+    }
     setIsUploading(true);
     try {
+      // Per docs: uploadData({ path, data }) and (best practice) await .result
       await uploadData({
         path: `${FILE_PREFIX}${selectedFile.name}`,
         data: selectedFile,
-      }).result; // wait for completion
+      }).result; // awaits the actual transfer (docs show both with & without .result)
       setSelectedFile(null);
       await refreshFiles();
+    } catch (e: any) {
+      alert('Upload failed: ' + (e?.message || String(e)));
+      // Also check browser console for details (403 usually means path/auth rule mismatch)
+      console.error('Upload error', e);
     } finally {
       setIsUploading(false);
     }
   }
 
-  // NEW: Download on click (opens presigned URL)
+  // --- Download (presigned URL) ---
   async function download(path: string) {
     const { url } = await getUrl({ path });
-    // Open a new tab to download (or use <a download> if you prefer)
     window.open(url.toString(), '_blank', 'noopener,noreferrer');
   }
 
   return (
     <main>
       <h1>My todos</h1>
-      <button onClick={createTodo}>+ new</button>
+      <button type="button" onClick={createTodo}>+ new</button>
       <ul>
         {todos.map((todo) => (
-          <li
-            onClick={() => deleteTodo(todo.id)}
-            key={todo.id}>{todo.content}</li>
+          <li key={todo.id} onClick={() => deleteTodo(todo.id)}>{todo.content}</li>
         ))}
       </ul>
 
-      {/* --- Files section --- */}
+      {/* Files section */}
       <h2 style={{ marginTop: 24 }}>Files on S3</h2>
 
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-        <input
-          type="file"
-          onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
-        />
-        <button onClick={handleUpload} disabled={!selectedFile || isUploading}>
+        <input type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)} />
+        <button type="button" onClick={handleUpload} disabled={!selectedFile || isUploading}>
           {isUploading ? 'Uploading…' : 'Upload'}
         </button>
-        <button onClick={refreshFiles} disabled={isLoadingFiles}>
+        <button type="button" onClick={refreshFiles} disabled={isLoadingFiles}>
           {isLoadingFiles ? 'Refreshing…' : 'Refresh list'}
         </button>
       </div>
 
       <ul>
         {files.map((f) => (
-          <li key={f.path} onClick={() => download(f.path)}>
+          <li key={f.path} onClick={() => download(f.path)} style={{ cursor: 'pointer' }}>
             {f.name}
           </li>
         ))}
         {files.length === 0 && !isLoadingFiles && <li>No files yet.</li>}
       </ul>
-      {/* --- end Files section --- */}
 
       <div>
         🥳 App successfully hosted. Try creating a new todo and uploading a file.
@@ -129,7 +126,7 @@ function App() {
           Review next step of this tutorial.
         </a>
       </div>
-      <button onClick={signOut}>Sign out</button>
+      <button type="button" onClick={signOut}>Sign out</button>
     </main>
   );
 }
