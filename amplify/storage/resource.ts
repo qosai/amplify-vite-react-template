@@ -2,10 +2,9 @@
 import { defineStorage } from '@aws-amplify/backend';
 
 export const storage = defineStorage({
-    name: 'qosai_amplify_appUserFiles',
-    isDefault: true,
+    name: 'qosai_appUserUploads',   // new bucket unique to your app
+    isDefault: true,                 // ensures SDK finds it automatically
     access: (allow) => ({
-        // Authenticated users can list/read/write/delete under this prefix
         'user-uploads/*': [allow.authenticated.to(['read', 'write', 'delete'])],
     }),
 });
