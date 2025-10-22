@@ -87,6 +87,8 @@ function App() {
     window.open(url.toString(), '_blank', 'noopener,noreferrer');
   }
 
+
+
   return (
     <main>
       <h1>My todos</h1>
